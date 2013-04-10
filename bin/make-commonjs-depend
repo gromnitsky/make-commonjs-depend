@@ -1,0 +1,25 @@
+#!/usr/bin/env coffee
+# -*-coffee-*-
+
+fs = require 'fs'
+detective = require 'detective'
+
+usage = (err = true) ->
+  console.error "Usage: #{process.argv[0]} file1.js [file2.js ...]"
+  process.exit(if err then 1 else 0)
+
+readFile = (name) ->
+  try
+    fs.readFileSync idx
+  catch e
+    ""
+
+# main
+usage() unless process.argv.length > 2
+process.argv.shift() for idx in [0, 1]
+
+for idx in process.argv
+  console.log "* #{idx}"
+  continue if "" == (src = readFile idx)
+
+  console.log detective(src)

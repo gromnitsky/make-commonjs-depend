@@ -1,0 +1,17 @@
+{
+	"name": "make-commonjs-depend",
+	"version": "0.0.1",
+	"license": {
+		"type": "MIT",
+		"url": "http://www.opensource.org/licenses/mit-license.php"
+	},
+	"repository": {
+		"type": "git",
+		"url": "http://github.com/gromnitsky/make-commonjs-depend"
+	},
+	"dependencies": {
+		"coffee-script": "~1.6.2",
+		"mocha": "~1.8.2",
+		"detective": "~2.1.0"
+	}
+}
