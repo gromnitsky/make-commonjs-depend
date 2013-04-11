@@ -1,18 +1,22 @@
 fs = require 'fs'
+path = require 'path'
 detective = require 'detective'
 
-readFile = (name) ->
+readFile = (name, oneMoreTime = true) ->
   try
-    fs.readFileSync idx
+    fs.readFileSync name
   catch e
-    ""
+    if oneMoreTime
+      readFile("#{name}.js", false)
+    else
+      ""
 
 class FNode
 
   constructor: (@name, mustBeReal = false) ->
     throw new Error "invalid name: '#{@name}'" unless FNode.IsValidName(@name)
     @name = fs.realpathSync @name if mustBeReal
-    @deps = {}
+    @deps = {} # { file_name : FNode }
     @parent = null
 
   # Return true if name is an absolute or _explicitly_ relative path.
@@ -24,12 +28,13 @@ class FNode
 
   # Return true if fname is our ancestor.
   isOffspringOf: (fname) ->
-#    console.log @name, @parent, fname
     return true if @name == fname
     return false unless @parent?.name
+
     if @parent.name == fname
       true
     else
+      # RECURSION
       @parent.isOffspringOf fname
 
   # Raise an exception on error.
@@ -47,42 +52,68 @@ class FNode
 
     nd
 
+  depSize: ->
+    Object.keys(@deps).length
+
+# Example:
+#
+# ft = new FTree()
+# ft.breed "a.js"
+# ft.print
 class FTree
+
   constructor: ->
     @root = null
+    @resolved = {} # { file_name: FNode }
 
-    # { file_name: FNode }
-    @resolved = {}
-
-  # Add to deps of parentNode new node from fname
-  #
-  # ftree.fill null, "a.js"
-  fill: (parentNode, fname) ->
-    try
-      nd = new FNode fname
-    catch e
+  # Raise an exception on error.
+  # Return nothing.
+  breed: (fname, parentNode) ->
+    if parentNode && !FNode.IsValidName fname
       console.log "#{fname}: ignoring"
       return
 
-    nd.name = fs.realpathSync nd.name
     try
-      deps = detective (readFile dn.name)
+      deps = detective (readFile fname)
     catch e
-      throw new Error "#{nd.name} parse error: #{e}"
+      throw new Error "#{fname} parse error: #{e}"
 
-    if parentNode == null
-      @root = nd
+    unless parentNode
+      fname = fs.realpathSync fname
+      process.chdir path.dirname(fname)
+      fname = path.basename fname
+
+      parentNode = new FNode "./#{fname}"
+      @root = parentNode
       @resolved = {}
-    else
-      if @resolved[nd.name]
-        parentNode.push @resolved[nd.name]
-        return
-      else
-        parentNode.push nd
 
-    @resolved[nd.name] = nd
+    console.log process.cwd()
+    console.log "#{fname} deps:", deps
     for idx in deps
-      @fill nd, idx
+      # RECURSION
+      process.chdir path.dirname(idx)
+      try
+        nd = parentNode.depAdd idx
+      catch e
+        console.log "#{idx}: skipping"
+        continue
+
+      @breed idx, nd
+
+  print: (fnode, indent = 0) ->
+    fnode = @root unless fnode
+    unless fnode
+      console.log "FTree is empty"
+      return
+
+    prefix = ''
+    cur_indent = indent
+    prefix += " " while cur_indent--
+
+    console.log "#{prefix}#{fnode.name}, deps: #{fnode.depSize()}"
+    for key,val of fnode.deps
+      @print val, indent+2
+
 
 exports.FNode = FNode
 exports.FTree = FTree
