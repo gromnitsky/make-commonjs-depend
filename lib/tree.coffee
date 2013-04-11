@@ -5,7 +5,7 @@ detective = require 'detective'
 class FNode
 
   constructor: (@name, mustBeReal = false) ->
-    throw new Error "invalid name: '#{@name}'" unless FNode.IsValidName(@name)
+    throw new Error "unwanted name: '#{@name}'" unless FNode.IsValidName(@name)
     @name = FNode.ResolveName @name if mustBeReal
     @deps = {} # { file_name : FNode }
     @parent = null
@@ -17,17 +17,22 @@ class FNode
     return true if name.match /^(\/|\.\.\/|\.\/).+/
     false
 
+  # Raise an exception on error.
+  # Does NOT follow symlinks.
+  #
+  # Return an absolute file name.
   @ResolveName: (name) ->
-    result = null
-    err = null
+    found = false
+    absolute = null
+    name = path.basename name
     for idx in [name, "#{name}.js"]
-      try
-        result = fs.realpathSync idx
-      catch e
-        err = e
+      absolute = path.resolve idx
+      if fs.existsSync(absolute) && !fs.statSync(absolute).isDirectory()
+        found = true
+        break
 
-    throw err if !result
-    result
+    throw new Error "#{name} not found" unless found
+    absolute
 
   # Return true if fname is our ancestor.
   isOffspringOf: (fname) ->
@@ -76,12 +81,13 @@ class FTree
   # Side effect: changes current dir.
   # Return new FNode.
   createRoot: (fname) ->
-    fname = FNode.ResolveName fname
     process.chdir path.dirname(fname)
     fname = path.basename fname
 
     @root = new FNode "./#{fname}", true
 
+  # Raise an exception on error.
+  # Return an array of (incomplete) file names.
   @GetDeps: (fname) ->
     try
       jscript = fs.readFileSync fname
@@ -133,7 +139,8 @@ class FTree
     cur_indent = indent
     prefix += " " while cur_indent--
 
-    name = path.basename fnode.name
+    re = new RegExp "^#{process.cwd()}/?"
+    name = fnode.name.replace re, ''
     console.log "#{prefix}#{name}, deps: #{fnode.depSize()}"
     for key,val of fnode.deps
       @print val, indent+2
