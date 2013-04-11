@@ -1,1 +1,1 @@
-require('../d')
+require('./d')

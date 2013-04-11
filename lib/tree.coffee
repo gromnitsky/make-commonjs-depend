@@ -18,21 +18,28 @@ class FNode
     false
 
   # Raise an exception on error.
-  # Does NOT follow symlinks.
+  # Does follow symlinks.
   #
   # Return an absolute file name.
   @ResolveName: (name) ->
-    found = false
-    absolute = null
+    result = null
+    err = null
     name = path.basename name
-    for idx in [name, "#{name}.js"]
-      absolute = path.resolve idx
-      if fs.existsSync(absolute) && !fs.statSync(absolute).isDirectory()
-        found = true
-        break
+    for idx in [name, "#{name}.js", "#{name}.json", "#{name}.node"]
+#      console.log "\nRN1: idx=%s cwd=%s", idx, process.cwd()
+      try
+        result = fs.realpathSync idx
+        continue if fs.statSync(result).isDirectory()
 
-    throw new Error "#{name} not found" unless found
-    absolute
+        # symlink may resolve to a another dir
+        process.chdir path.dirname(result)
+#        console.log "RN2: cwd=%s r=%s", process.cwd(), result
+        break
+      catch e
+        err = e
+
+    throw err if !result
+    result
 
   # Return true if fname is our ancestor.
   isOffspringOf: (fname) ->
