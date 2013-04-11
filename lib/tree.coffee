@@ -2,20 +2,11 @@ fs = require 'fs'
 path = require 'path'
 detective = require 'detective'
 
-readFile = (name, oneMoreTime = true) ->
-  try
-    fs.readFileSync name
-  catch e
-    if oneMoreTime
-      readFile("#{name}.js", false)
-    else
-      ""
-
 class FNode
 
   constructor: (@name, mustBeReal = false) ->
     throw new Error "invalid name: '#{@name}'" unless FNode.IsValidName(@name)
-    @name = fs.realpathSync @name if mustBeReal
+    @name = FNode.ResolveName @name if mustBeReal
     @deps = {} # { file_name : FNode }
     @parent = null
 
@@ -25,6 +16,18 @@ class FNode
 
     return true if name.match /^(\/|\.\.\/|\.\/).+/
     false
+
+  @ResolveName: (name) ->
+    result = null
+    err = null
+    for idx in [name, "#{name}.js"]
+      try
+        result = fs.realpathSync idx
+      catch e
+        err = e
+
+    throw err if !result
+    result
 
   # Return true if fname is our ancestor.
   isOffspringOf: (fname) ->
@@ -42,11 +45,12 @@ class FNode
   #
   # Return added FNode.
   depAdd: (fname, mustBeReal = false) ->
-    fname = fs.realpathSync fname if mustBeReal
+    nd = new FNode fname, mustBeReal
+
+    fname = nd.name
     if @isOffspringOf fname
       throw new Error "circular dependency between '#{fname}' & ('#{@name}' or its parents)"
 
-    nd = new FNode fname
     nd.parent = this
     @deps[fname] = nd
 
@@ -62,43 +66,62 @@ class FNode
 # ft.print
 class FTree
 
-  constructor: ->
+  # @resolved is pool of shared, already processed FNodes:
+  #
+  # { file_name: FNode }
+  constructor: (@resolved = {}) ->
     @root = null
-    @resolved = {} # { file_name: FNode }
+    @startDir = process.cwd()
+
+  # Side effect: changes current dir.
+  # Return new FNode.
+  createRoot: (fname) ->
+    fname = FNode.ResolveName fname
+    process.chdir path.dirname(fname)
+    fname = path.basename fname
+
+    @root = new FNode "./#{fname}", true
+
+  @GetDeps: (fname) ->
+    try
+      jscript = fs.readFileSync fname
+      deps = detective jscript
+    catch e
+      throw new Error "#{fname} parse error: #{e}"
 
   # Raise an exception on error.
   # Return nothing.
   breed: (fname, parentNode) ->
-    if parentNode && !FNode.IsValidName fname
-      console.log "#{fname}: ignoring"
-      return
+    deps = null
 
-    try
-      deps = detective (readFile fname)
-    catch e
-      throw new Error "#{fname} parse error: #{e}"
+    if parentNode
+      if @resolved[fname]
+        console.log "#{fname} WAS BEFORE (parent: #{parentNode.parent.name})"
+        parentNode.parent.deps[fname] = @resolved[fname]
+        return
+    else
+      deps = FTree.GetDeps fname
+      parentNode = @createRoot fname
 
-    unless parentNode
-      fname = fs.realpathSync fname
-      process.chdir path.dirname(fname)
-      fname = path.basename fname
-
-      parentNode = new FNode "./#{fname}"
-      @root = parentNode
-      @resolved = {}
-
-    console.log process.cwd()
+    deps = deps ? FTree.GetDeps fname
     console.log "#{fname} deps:", deps
+    save_dir = process.cwd()
     for idx in deps
-      # RECURSION
       process.chdir path.dirname(idx)
       try
-        nd = parentNode.depAdd idx
+        nd = parentNode.depAdd idx, true
+        idx = nd.name
       catch e
-        console.log "#{idx}: skipping"
+        console.log "#{idx}: skipping, #{e}"
+        process.chdir save_dir
         continue
 
+      # RECURSION
       @breed idx, nd
+      @resolved[idx] = nd unless @resolved[idx]
+      process.chdir save_dir
+
+    process.chdir @startDir
 
   print: (fnode, indent = 0) ->
     fnode = @root unless fnode
@@ -110,7 +133,8 @@ class FTree
     cur_indent = indent
     prefix += " " while cur_indent--
 
-    console.log "#{prefix}#{fnode.name}, deps: #{fnode.depSize()}"
+    name = path.basename fnode.name
+    console.log "#{prefix}#{name}, deps: #{fnode.depSize()}"
     for key,val of fnode.deps
       @print val, indent+2
 

@@ -14,8 +14,12 @@ usage = (err = true) ->
 usage() unless process.argv.length > 2
 process.argv.shift() for idx in [0, 1]
 
+resolvedNodes = {}
 for idx in process.argv
-  console.log "* #{idx}"
-  ft = new tree.FTree()
+  console.log "\n* #{idx}"
+  ft = new tree.FTree resolvedNodes
   ft.breed idx
   ft.print()
+
+#console.log "\n"
+#console.log resolvedNodes
