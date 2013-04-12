@@ -2,6 +2,8 @@ fs = require 'fs'
 path = require 'path'
 detective = require 'detective'
 
+fub = require './funcbag'
+
 class FNode
 
   constructor: (@name, mustBeReal = false) ->
@@ -26,14 +28,14 @@ class FNode
     err = null
     name = path.basename name
     for idx in [name, "#{name}.js", "#{name}.json", "#{name}.node"]
-#      console.log "\nRN1: idx=%s cwd=%s", idx, process.cwd()
+      fub.puts 2, '\nRN1', 'idx=%s cwd=%s', idx, process.cwd()
       try
         result = fs.realpathSync idx
         continue if fs.statSync(result).isDirectory()
 
         # symlink may resolve to a another dir
         process.chdir path.dirname(result)
-#        console.log "RN2: cwd=%s r=%s", process.cwd(), result
+        fub.puts 2, '\nRN1', 'cwd=%s r=%s', process.cwd(), result
         break
       catch e
         err = e
@@ -109,7 +111,7 @@ class FTree
 
     if parentNode
       if @resolved[fname]
-        console.log "#{fname} WAS BEFORE (parent: #{parentNode.parent.name})"
+        fub.puts 1, 'breed', '%s: WAS BEFORE: parent: %s', fname, parentNode.parent.name
         parentNode.parent.deps[fname] = @resolved[fname]
         return
     else
@@ -117,7 +119,7 @@ class FTree
       parentNode = @createRoot fname
 
     deps = deps ? FTree.GetDeps fname
-    console.log "#{fname} deps:", deps
+    fub.puts 1, 'breed', '%s: deps:', fname, deps
     save_dir = process.cwd()
     for idx in deps
       process.chdir path.dirname(idx)
@@ -125,7 +127,7 @@ class FTree
         nd = parentNode.depAdd idx, true
         idx = nd.name
       catch e
-        console.log "#{idx}: skipping, #{e}"
+        fub.puts 1, 'breed', '%s: SKIPPING: %s', idx, e
         process.chdir save_dir
         continue
 
@@ -139,7 +141,7 @@ class FTree
   print: (fnode, indent = 0) ->
     fnode = @root unless fnode
     unless fnode
-      console.log "FTree is empty"
+      fun.puts 1, 'print', 'FTree is empty'
       return
 
     prefix = ''

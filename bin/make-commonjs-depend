@@ -2,24 +2,75 @@
 # -*-coffee-*-
 
 fs = require 'fs'
+optparse = require 'optparse'
+
+class Meta
+  @_Pkg: null
+
+  @JSON: ->
+    if @_Pkg?
+      @_Pkg
+    else
+      @_Pkg = JSON.parse (fs.readFileSync "#{__dirname}/../package.json")
 
 tree = require '../lib/tree'
+fub = require '../lib/funcbag'
 
-usage = (err = true) ->
-  console.error "Usage: #{process.argv[0]} file1.js [file2.js ...]"
-  process.exit(if err then 1 else 0)
+conf = {
+    output: 'stdout'
+    mode: 'makefile'
+}
+
+parse_opts = (src) ->
+  opt = [
+    ['-h', '--help', 'output usage information & exit']
+    ['-V', '--version', 'output the version number & exit']
+    ['-v', '--verbose', 'increase a verbosity level']
+    ['-o', '--output [FILE]', 'write result to a FILE instead of stdout']
+    ['-t', '--tree', 'show simple dependency tree']
+  ]
+  p = new optparse.OptionParser opt
+  p.banner = "Usage: #{fub.pnGet()} [options] file.js ..."
+
+  p.on 'verbose', -> fub.VERBOSE++
+
+  p.on 'help', ->
+    console.log p.toString()
+    process.exit 0
+
+  p.on 'version', ->
+    console.log Meta.JSON().version
+    process.exit 0
+
+  p.on 'output', (unused, val) ->
+    conf.output = val
+
+  p.on 'tree', -> conf.mode = 'tree-plain'
+
+  p.on (o) -> fub.errx 1, "unknown option #{o}"
+
+  [(p.parse src), p]
+
+draw_tree = (args) ->
+  resolvedNodes = {}
+  for file,index in args
+    console.log "%s* #{file}", (if !index then "" else "\n")
+
+    ft = new tree.FTree resolvedNodes
+    ft.breed file
+    ft.print()
 
 
 # main
-usage() unless process.argv.length > 2
-process.argv.shift() for idx in [0, 1]
 
-resolvedNodes = {}
-for idx in process.argv
-  console.log "\n* #{idx}"
-  ft = new tree.FTree resolvedNodes
-  ft.breed idx
-  ft.print()
+[args, p] = parse_opts process.argv
+args = args[2..-1]
+if args.length < 1
+  console.log p.toString()
+  process.exit 1
 
-#console.log "\n"
-#console.log resolvedNodes
+switch conf.mode
+  when 'tree-plain'
+    draw_tree args
+  else
+    fub.errx 1, "mode #{conf.mode} isn't implemented"
