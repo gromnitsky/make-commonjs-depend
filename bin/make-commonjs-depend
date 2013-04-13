@@ -56,7 +56,12 @@ draw_tree = (args) ->
     console.log "%s* #{file}", (if !index then "" else "\n")
 
     ft = new tree.FTree resolvedNodes
-    ft.breed file
+    try
+      ft.breed file
+    catch e
+      fub.errx 1, e.message if e instanceof tree.FNodeDepError
+      throw e
+
     ft.print()
 
 
