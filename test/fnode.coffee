@@ -4,6 +4,7 @@ tree = require '../lib/tree'
 
 suite 'Tree', ->
   setup ->
+    process.chdir __dirname
 
   test 'invalid fnode', ->
     assert.throws -> new tree.FNode()
@@ -41,3 +42,18 @@ suite 'Tree', ->
     assert.equal './2', nd.parent.parent.name
     assert.equal './1', nd.parent.parent.parent.name
     assert.equal null, nd.parent.parent.parent.parent
+
+  test 'ResolveName fail', ->
+    assert.throws -> tree.FNode.ResolveName()
+    assert.throws -> tree.FNode.ResolveName "DOESN'T EXIST"
+
+    # because it cannot resolve in current 'test' directory
+    assert.throws -> tree.FNode.ResolveName 'test/data/simple/d.js'
+
+  test 'ResolveName symlink', ->
+    process.chdir 'data/simple'
+    assert tree.FNode.ResolveName('test/data/simple/d.js').match '/test/data/simple/d/d.js'
+
+  test 'ResolveName normal', ->
+    process.chdir 'data/simple'
+    assert tree.FNode.ResolveName('test/data/simple/a.js').match '/test/data/simple/a.js'

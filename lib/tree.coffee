@@ -22,11 +22,15 @@ class FNode
   # Raise an exception on error.
   # Does follow symlinks.
   #
+  # May change CWD.
   # Return an absolute file name.
   @ResolveName: (name) ->
+    throw new Error 'empty name' unless name
+
     result = null
     err = null
     name = path.basename name
+
     for idx in [name, "#{name}.js", "#{name}.json", "#{name}.node"]
       fub.puts 2, '\nRN1', 'idx=%s cwd=%s', idx, process.cwd()
       try
