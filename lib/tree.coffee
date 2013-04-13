@@ -4,17 +4,29 @@ detective = require 'detective'
 
 fub = require './funcbag'
 
+class FNodeError extends Error
+  constructor: (msg) ->
+    @name = @constructor.name
+    @message = "FNode: #{msg}"
+    Error.captureStackTrace this, @name
+
+class FNodeDepError extends Error
+  constructor: (msg) ->
+    @name = @constructor.name
+    @message = "FNodeDep: #{msg}"
+    Error.captureStackTrace this, @name
+
 class FNode
 
   constructor: (@name, mustBeReal = false) ->
-    throw new Error "unwanted name: '#{@name}'" unless FNode.IsValidName(@name)
+    throw new FNodeError "unwanted name: '#{@name}'" unless FNode.IsValidName(@name)
     @name = FNode.ResolveName @name if mustBeReal
     @deps = {} # { file_name : FNode }
     @parent = null
 
   # Return true if name is an absolute or _explicitly_ relative path.
   @IsValidName: (name) ->
-    throw new Error "unsupported platform: #{process.platform}" if process.platform == 'win32'
+    throw new FNodeError "unsupported platform: #{process.platform}" if process.platform == 'win32'
 
     return true if name.match /^(\/|\.\.\/|\.\/).+/
     false
@@ -25,7 +37,7 @@ class FNode
   # May change CWD.
   # Return an absolute file name.
   @ResolveName: (name) ->
-    throw new Error 'empty name' unless name
+    throw new FNodeError 'empty name' unless name
 
     result = null
     err = null
@@ -42,7 +54,7 @@ class FNode
         fub.puts 2, '\nRN1', 'cwd=%s r=%s', process.cwd(), result
         break
       catch e
-        err = e
+        err = new FNodeError(e.message)
 
     throw err if !result
     result
@@ -67,7 +79,7 @@ class FNode
 
     fname = nd.name
     if @isOffspringOf fname
-      throw new Error "circular dependency between '#{fname}' & ('#{@name}' or its parents)"
+      throw new FNodeDepError "circular link between '#{fname}' & ('#{@name}' or its parents)"
 
     nd.parent = this
     @deps[fname] = nd
@@ -76,6 +88,13 @@ class FNode
 
   depSize: ->
     Object.keys(@deps).length
+
+
+class FTreeError extends Error
+  constructor: (msg) ->
+    @name = @constructor.name
+    @message = "FTree: #{msg}"
+    Error.captureStackTrace this, @name
 
 # Example:
 #
@@ -98,7 +117,7 @@ class FTree
     try
       process.chdir dir
     catch e
-      throw new Error "chdir failed: #{e}: #{dir}"
+      throw new FTreeError "chdir failed: #{e}: #{dir}"
 
     fname = path.basename fname
     @root = new FNode "./#{fname}", true
@@ -106,12 +125,12 @@ class FTree
   # Raise an exception on error.
   # Return an array of (incomplete) file names.
   @GetDeps: (fname) ->
-    throw new Error "no file name specified" unless fname
+    throw new FNodeDepError "no file name specified" unless fname
     try
       jscript = fs.readFileSync fname
       deps = detective jscript
     catch e
-      throw new Error "#{fname} parse error: #{e}"
+      throw new FNodeDepError "#{fname} parse error: #{e}"
 
   # Raise an exception on error.
   # Return nothing.
@@ -136,9 +155,11 @@ class FTree
         nd = parentNode.depAdd idx, true
         idx = nd.name
       catch e
-        fub.puts 1, 'breed', '%s: SKIPPING: %s', idx, e
-        process.chdir save_dir
-        continue
+        if e instanceof FNodeError
+          fub.puts 1, 'breed', '%s: SKIPPING: %s', idx, e.message
+          process.chdir save_dir
+          continue
+        throw e
 
       # RECURSION
       @breed idx, nd
@@ -164,5 +185,9 @@ class FTree
       @print val, indent+2
 
 
+exports.FNodeError = FNodeError
+exports.FNodeDepError = FNodeDepError
 exports.FNode = FNode
+
+exports.FTreeError = FTreeError
 exports.FTree = FTree

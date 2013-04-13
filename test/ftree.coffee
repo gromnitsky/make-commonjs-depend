@@ -15,11 +15,11 @@ suite 'Tree', ->
   test 'createRoot fail', ->
     assert.throws =>
        @t.createRoot()
-    , /ENOENT/
+    , tree.FNodeError
 
     assert.throws =>
       @t.createRoot 'DOES NOT/EXIST/foo.js'
-    , /chdir failed/
+    , tree.FTreeError
 
   test 'createRoot fail', ->
     @t.createRoot 'data/simple/d.js'
@@ -45,7 +45,7 @@ suite 'Tree', ->
   test 'breed fail', ->
     assert.throws =>
       @t.breed()
-    , /no file name specified/
+    , tree.FNodeDepError
 
   test 'breed simple/a.js & simple/b.js', ->
     # read 1st source file
@@ -79,3 +79,8 @@ suite 'Tree', ->
 
     key = (Object.keys foo.root.deps)[0]
     assert.equal c, foo.root.deps[key]
+
+  test 'raise FNodeDepError exception for circular deps', ->
+    assert.throws =>
+      @t.breed 'data/broken/circular/a.js'
+    , tree.FNodeDepError
