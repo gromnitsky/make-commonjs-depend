@@ -81,7 +81,7 @@ class FNode
 #
 # ft = new FTree()
 # ft.breed "a.js"
-# ft.print
+# ft.print()
 class FTree
 
   # @resolved is pool of shared, already processed FNodes:
@@ -91,17 +91,22 @@ class FTree
     @root = null
     @startDir = process.cwd()
 
-  # Side effect: changes current dir.
+  # Side effects: changes current dir.
   # Return new FNode.
   createRoot: (fname) ->
-    process.chdir path.dirname(fname)
-    fname = path.basename fname
+    dir = path.dirname(fname)
+    try
+      process.chdir dir
+    catch e
+      throw new Error "chdir failed: #{e}: #{dir}"
 
+    fname = path.basename fname
     @root = new FNode "./#{fname}", true
 
   # Raise an exception on error.
   # Return an array of (incomplete) file names.
   @GetDeps: (fname) ->
+    throw new Error "no file name specified" unless fname
     try
       jscript = fs.readFileSync fname
       deps = detective jscript
