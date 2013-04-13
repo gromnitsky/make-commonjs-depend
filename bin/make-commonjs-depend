@@ -27,7 +27,7 @@ parse_opts = (src) ->
     ['-V', '--version', 'output the version number & exit']
     ['-v', '--verbose', 'increase a verbosity level']
     ['-o', '--output [FILE]', 'write result to a FILE instead of stdout']
-    ['-t', '--tree', 'show simple dependency tree']
+    ['-m', '--mode [STRING]', 'makefile, tree-plain']
   ]
   p = new optparse.OptionParser opt
   p.banner = "Usage: #{fub.pnGet()} [options] file.js ..."
@@ -42,10 +42,9 @@ parse_opts = (src) ->
     console.log Meta.JSON().version
     process.exit 0
 
-  p.on 'output', (unused, val) ->
-    conf.output = val
+  p.on 'output', (unused, val) -> conf.output = val
 
-  p.on 'tree', -> conf.mode = 'tree-plain'
+  p.on 'mode', (unused, val) -> conf.mode = val
 
   p.on (o) -> fub.errx 1, "unknown option #{o}"
 
