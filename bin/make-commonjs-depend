@@ -54,7 +54,7 @@ parse_opts = (src) ->
 draw_tree = (args) ->
   resolvedNodes = {}
   for file,index in args
-    console.log "%s* #{file}", (if !index then "" else "\n")
+    console.log "" if index
 
     ft = new tree.FTree resolvedNodes
     try
@@ -65,6 +65,18 @@ draw_tree = (args) ->
 
     (new printer.DumbTreePrinter ft).print()
 
+draw_makefile = (args) ->
+  resolvedNodes = {}
+  completedJobs = {}
+  for file,index in args
+    ft = new tree.FTree resolvedNodes
+    try
+      ft.breed file
+    catch e
+      fub.errx 1, e.message if e instanceof tree.FNodeDepError
+      throw e
+
+    new printer.MakefilePrinter(ft, completedJobs).print()
 
 # main
 
@@ -77,5 +89,7 @@ if args.length < 1
 switch conf.mode
   when 'tree-plain'
     draw_tree args
+  when 'makefile'
+    draw_makefile args
   else
     fub.errx 1, "mode #{conf.mode} isn't implemented"
