@@ -21,7 +21,7 @@ printer = require '../lib/printer'
 conf = {
   streams: false
   startDir: process.cwd()
-  rm_output_onerror: false
+  rm_output_onerror: true
 
   output: process.stdout
   mode: 'makefile'
@@ -73,28 +73,20 @@ fnodes_each = (args, beforeCallback, afterCallback) ->
     try
       ft.breed file
     catch e
-      console.dir conf.readStream
       rm_output_onerror()
       fub.errx 1, e.message if e instanceof tree.FNodeDepError
       throw e
 
-    # create read stream
-    unless conf.readStream instanceof Stream
-      conf.readStream = new Stream()
-      conf.readStream.readable = true
-
     # create output stream
     unless conf.output instanceof Stream
       conf.output = fs.createWriteStream conf.output
+      conf.output.on 'close', ->
+        fub.puts 1, 'output', 'close'
 
-    # configure all streams
+    # configure stream
     unless conf.streams
       conf.output.on 'error', (err) ->
         fub.errx 1, "output: #{err}"
-
-      conf.readStream.pipe conf.output
-      conf.readStream.on 'end', ->
-        fub.puts 1, 'readStream', 'end'
 
       conf.streams = true
 
@@ -103,9 +95,9 @@ fnodes_each = (args, beforeCallback, afterCallback) ->
 draw_tree = (args) ->
   fnodes_each args
   , (index) ->
-    conf.readStream?.emit 'data', "\n" if index
+    conf.output?.write "\n" if index
   , (ftree) ->
-    new printer.DumbTreePrinter(ftree, conf.readStream).print()
+    new printer.DumbTreePrinter(ftree, conf.output).print()
 
 draw_makefile = (args) ->
   completedJobs = {}
@@ -114,10 +106,11 @@ draw_makefile = (args) ->
   , (index) ->
     ;
   , (ftree) ->
-    new printer.MakefilePrinter(ftree, conf.readStream, {
+    new printer.MakefilePrinter(ftree, conf.output, {
       prefix: conf.prefix
       completedJobs: completedJobs
     }).print()
+
 
 # main
 
@@ -135,4 +128,4 @@ switch conf.mode
   else
     fub.errx 1, "mode #{conf.mode} isn't implemented"
 
-conf.readStream?.emit 'end'
+conf.output.end() if conf.output.path
