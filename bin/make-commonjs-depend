@@ -2,6 +2,7 @@
 # -*-coffee-*-
 
 fs = require 'fs'
+Stream = require 'stream'
 optparse = require 'optparse'
 
 class Meta
@@ -18,10 +19,18 @@ fub = require '../lib/funcbag'
 printer = require '../lib/printer'
 
 conf = {
-    output: 'stdout'
-    mode: 'makefile'
-    prefix: ''
+  streams: false
+  startDir: process.cwd()
+  rm_output_onerror: false
+
+  output: process.stdout
+  mode: 'makefile'
+  prefix: ''
 }
+
+rm_output_onerror = ->
+  return unless conf.rm_output_onerror && conf.output.path
+  fs.unlinkSync "#{conf.startDir}/#{conf.output.path}"
 
 parse_opts = (src) ->
   opt = [
@@ -64,17 +73,39 @@ fnodes_each = (args, beforeCallback, afterCallback) ->
     try
       ft.breed file
     catch e
+      console.dir conf.readStream
+      rm_output_onerror()
       fub.errx 1, e.message if e instanceof tree.FNodeDepError
       throw e
+
+    # create read stream
+    unless conf.readStream instanceof Stream
+      conf.readStream = new Stream()
+      conf.readStream.readable = true
+
+    # create output stream
+    unless conf.output instanceof Stream
+      conf.output = fs.createWriteStream conf.output
+
+    # configure all streams
+    unless conf.streams
+      conf.output.on 'error', (err) ->
+        fub.errx 1, "output: #{err}"
+
+      conf.readStream.pipe conf.output
+      conf.readStream.on 'end', ->
+        fub.puts 1, 'readStream', 'end'
+
+      conf.streams = true
 
     afterCallback ft
 
 draw_tree = (args) ->
   fnodes_each args
   , (index) ->
-    console.log "" if index
+    conf.readStream?.emit 'data', "\n" if index
   , (ftree) ->
-    (new printer.DumbTreePrinter ftree).print()
+    new printer.DumbTreePrinter(ftree, conf.readStream).print()
 
 draw_makefile = (args) ->
   completedJobs = {}
@@ -83,7 +114,10 @@ draw_makefile = (args) ->
   , (index) ->
     ;
   , (ftree) ->
-    new printer.MakefilePrinter(ftree, {prefix: conf.prefix}, completedJobs).print()
+    new printer.MakefilePrinter(ftree, conf.readStream, {
+      prefix: conf.prefix
+      completedJobs: completedJobs
+    }).print()
 
 # main
 
@@ -100,3 +134,5 @@ switch conf.mode
     draw_makefile args
   else
     fub.errx 1, "mode #{conf.mode} isn't implemented"
+
+conf.readStream?.emit 'end'

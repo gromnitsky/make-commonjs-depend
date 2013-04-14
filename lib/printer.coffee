@@ -7,10 +7,11 @@ class PrinterError extends Error
 # Abstract
 class Printer
 
-  constructor: (ftree, @opt) ->
+  constructor: (ftree, @readStream, @opt) ->
     throw new PrinterError 'invalid tree' unless ftree?.root
     @tree = ftree.root
 
+    throw new PrinterError 'invalid readable stream' unless @readStream?.readable
     @opt = {} unless @opt
 
   conciseName: (name) ->
@@ -32,16 +33,17 @@ class DumbTreePrinter extends Printer
     prefix += " " while cur_indent--
 
     name = @conciseName fnode.name
-    console.log "#{prefix}#{name}, deps: #{fnode.depSize()}"
+    @readStream.emit 'data', "#{prefix}#{name}, deps: #{fnode.depSize()}\n"
     for key,val of fnode.deps
       # RECURSION
       @print val, indent+DumbTreePrinter.INDENT_STEP
 
 class MakefilePrinter extends Printer
 
-  constructor: (ftree, opt, @completedJobs = {}) ->
-    super ftree, opt
+  constructor: (ftree, readStream, opt) ->
+    super ftree, readStream, opt
     @opt.prefix = '' unless @opt.prefix?
+    @opt.completedJobs = {} unless @opt.completedJobs?
 
   print: (fnode) ->
     fnode = @tree unless fnode
@@ -49,7 +51,7 @@ class MakefilePrinter extends Printer
 
     target_name = @conciseName fnode.name
     # don't print already printed
-    return if @completedJobs[target_name]
+    return if @opt.completedJobs[target_name]
 
     target_spec = "#{target_name}:"
 
@@ -59,8 +61,8 @@ class MakefilePrinter extends Printer
       target_spec += " \\\n  #{key}"
       deps.push val
 
-    console.log '%s%s', @opt.prefix, target_spec
-    @completedJobs[target_name] = true
+    @readStream.emit 'data', "#{@opt.prefix}#{target_spec}\n"
+    @opt.completedJobs[target_name] = true
 
     # RECURSION
     @print idx for idx in deps
