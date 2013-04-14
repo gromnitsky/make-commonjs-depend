@@ -168,22 +168,6 @@ class FTree
 
     process.chdir @startDir
 
-  print: (fnode, indent = 0) ->
-    fnode = @root unless fnode
-    unless fnode
-      fun.puts 1, 'print', 'FTree is empty'
-      return
-
-    prefix = ''
-    cur_indent = indent
-    prefix += " " while cur_indent--
-
-    re = new RegExp "^#{process.cwd()}/?"
-    name = fnode.name.replace re, ''
-    console.log "#{prefix}#{name}, deps: #{fnode.depSize()}"
-    for key,val of fnode.deps
-      @print val, indent+2
-
 
 exports.FNodeError = FNodeError
 exports.FNodeDepError = FNodeDepError

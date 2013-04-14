@@ -15,6 +15,7 @@ class Meta
 
 tree = require '../lib/tree'
 fub = require '../lib/funcbag'
+printer = require '../lib/printer'
 
 conf = {
     output: 'stdout'
@@ -62,7 +63,7 @@ draw_tree = (args) ->
       fub.errx 1, e.message if e instanceof tree.FNodeDepError
       throw e
 
-    ft.print()
+    (new printer.DumbTreePrinter ft).print()
 
 
 # main
