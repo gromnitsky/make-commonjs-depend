@@ -1,6 +1,8 @@
 {
 	"name": "make-commonjs-depend",
 	"version": "0.0.1",
+	"preferGlobal": true,
+	"author": "Alexander Gromnitsky <alexander.gromnitsky@gmail.com>",
 	"license": {
 		"type": "MIT",
 		"url": "http://www.opensource.org/licenses/mit-license.php"
@@ -10,9 +12,11 @@
 		"url": "http://github.com/gromnitsky/make-commonjs-depend"
 	},
 	"dependencies": {
-		"coffee-script": "~1.6.2",
-		"mocha": "~1.8.2",
 		"detective": "~2.1.0",
-		"optparse": "~1.0.4"
+		"optparse": "~1.0.4",
+		"coffee-script": "~1.6.2"
+	},
+	"devDependencies": {
+		"mocha": "~1.8.2"
 	}
 }

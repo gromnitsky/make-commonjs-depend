@@ -61,6 +61,11 @@ for JavaScript.
 Notice 0 duplication. Despite that input was 3 .js files, dependencies
 were printed only once.
 
+## Requirements
+
+* Node.js >= 0.10.2
+* CoffeeScript >= 1.6.2
+
 ## BUGS
 
 * Doesn't work under Windows.
