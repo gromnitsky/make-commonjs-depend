@@ -20,15 +20,17 @@ printer = require '../lib/printer'
 conf = {
     output: 'stdout'
     mode: 'makefile'
+    prefix: ''
 }
 
 parse_opts = (src) ->
   opt = [
     ['-h', '--help', 'output usage information & exit']
     ['-V', '--version', 'output the version number & exit']
-    ['-v', '--verbose', 'increase a verbosity level']
+    ['-v', '--verbose', 'increase a verbosity level (useful only for debug)']
     ['-o', '--output [FILE]', 'write result to a FILE instead of stdout']
-    ['-m', '--mode [STRING]', 'makefile, tree-plain']
+    ['-p', '--prefix [STRING]', 'the prefix is prepended to the name of the target ']
+    ['-m', '--mode [STRING]', 'makefile, tree-dumb']
   ]
   p = new optparse.OptionParser opt
   p.banner = "Usage: #{fub.pnGet()} [options] file.js ..."
@@ -45,16 +47,18 @@ parse_opts = (src) ->
 
   p.on 'output', (unused, val) -> conf.output = val
 
+  p.on 'prefix', (unused, val) -> conf.prefix = val
+
   p.on 'mode', (unused, val) -> conf.mode = val
 
   p.on (o) -> fub.errx 1, "unknown option #{o}"
 
   [(p.parse src), p]
 
-draw_tree = (args) ->
+fnodes_each = (args, beforeCallback, afterCallback) ->
   resolvedNodes = {}
   for file,index in args
-    console.log "" if index
+    beforeCallback index
 
     ft = new tree.FTree resolvedNodes
     try
@@ -63,20 +67,23 @@ draw_tree = (args) ->
       fub.errx 1, e.message if e instanceof tree.FNodeDepError
       throw e
 
-    (new printer.DumbTreePrinter ft).print()
+    afterCallback ft
+
+draw_tree = (args) ->
+  fnodes_each args
+  , (index) ->
+    console.log "" if index
+  , (ftree) ->
+    (new printer.DumbTreePrinter ftree).print()
 
 draw_makefile = (args) ->
-  resolvedNodes = {}
   completedJobs = {}
-  for file,index in args
-    ft = new tree.FTree resolvedNodes
-    try
-      ft.breed file
-    catch e
-      fub.errx 1, e.message if e instanceof tree.FNodeDepError
-      throw e
 
-    new printer.MakefilePrinter(ft, completedJobs).print()
+  fnodes_each args
+  , (index) ->
+    ;
+  , (ftree) ->
+    new printer.MakefilePrinter(ftree, {prefix: conf.prefix}, completedJobs).print()
 
 # main
 
@@ -87,7 +94,7 @@ if args.length < 1
   process.exit 1
 
 switch conf.mode
-  when 'tree-plain'
+  when 'tree-dumb'
     draw_tree args
   when 'makefile'
     draw_makefile args

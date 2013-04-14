@@ -7,9 +7,11 @@ class PrinterError extends Error
 # Abstract
 class Printer
 
-  constructor: (ftree) ->
+  constructor: (ftree, @opt) ->
     throw new PrinterError 'invalid tree' unless ftree?.root
     @tree = ftree.root
+
+    @opt = {} unless @opt
 
   conciseName: (name) ->
     name.replace (new RegExp "^#{process.cwd()}/?"), ''
@@ -37,8 +39,9 @@ class DumbTreePrinter extends Printer
 
 class MakefilePrinter extends Printer
 
-  constructor: (ftree, @completedJobs = {}) ->
-    super ftree
+  constructor: (ftree, opt, @completedJobs = {}) ->
+    super ftree, opt
+    @opt.prefix = '' unless @opt.prefix?
 
   print: (fnode) ->
     fnode = @tree unless fnode
@@ -53,10 +56,10 @@ class MakefilePrinter extends Printer
     deps = []
     for key,val of fnode.deps
       key = @conciseName key
-      target_spec += " #{key}"
+      target_spec += " \\\n  #{key}"
       deps.push val
 
-    console.log target_spec
+    console.log '%s%s', @opt.prefix, target_spec
     @completedJobs[target_name] = true
 
     # RECURSION
