@@ -84,3 +84,7 @@ suite 'Tree', ->
     assert.throws =>
       @t.breed 'data/broken/circular/a.js'
     , tree.FNodeDepError
+
+  test 'ignore directory as a dependency', ->
+    @t.breed 'data/broken/dir/a.js'
+    assert.equal 0, @t.root.depSize()

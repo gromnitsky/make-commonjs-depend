@@ -47,7 +47,9 @@ class FNode
       fub.puts 2, '\nRN1', 'idx=%s cwd=%s', idx, process.cwd()
       try
         result = fs.realpathSync idx
-        continue if fs.statSync(result).isDirectory()
+        if fs.statSync(result).isDirectory()
+          result = null
+          continue
 
         # symlink may resolve to a another dir
         process.chdir path.dirname(result)
