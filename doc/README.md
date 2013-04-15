@@ -22,10 +22,11 @@ for JavaScript.
     Available options:
       -h, --help              output usage information & exit
       -V, --version           output the version number & exit
-      -v, --verbose           increase a verbosity level (useful only for debug)
+      -v, --verbose           increase a verbosity level (debug only)
       -o, --output [FILE]     write result to a FILE instead of stdout
       -p, --prefix [STRING]   the prefix is prepended to the name of the target
       -m, --mode [STRING]     makefile, tree-dumb
+          --dups-check        analyze any file exactly once
 
 ### Quick visual test
 

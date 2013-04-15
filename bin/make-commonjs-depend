@@ -2,6 +2,7 @@
 # -*-coffee-*-
 
 fs = require 'fs'
+path = require 'path'
 Stream = require 'stream'
 optparse = require 'optparse'
 
@@ -26,6 +27,7 @@ conf = {
   output: process.stdout
   mode: 'makefile'
   prefix: ''
+  dupsCheck: false
 }
 
 rm_output_onerror = ->
@@ -34,17 +36,20 @@ rm_output_onerror = ->
 
 parse_opts = (src) ->
   opt = [
-    ['-h', '--help', 'output usage information & exit']
-    ['-V', '--version', 'output the version number & exit']
-    ['-v', '--verbose', 'increase a verbosity level (useful only for debug)']
-    ['-o', '--output [FILE]', 'write result to a FILE instead of stdout']
-    ['-p', '--prefix [STRING]', 'the prefix is prepended to the name of the target ']
-    ['-m', '--mode [STRING]', 'makefile, tree-dumb']
+    ["-h", "--help", "output usage information & exit"]
+    ["-V", "--version", "output the version number & exit"]
+    ["-v", "--verbose", "increase a verbosity level (debug only)"]
+    ["-o", "--output [FILE]", "write result to a FILE instead of stdout"]
+    ["-p", "--prefix [STRING]", "the prefix is prepended to the name of the target"]
+    ["-m", "--mode [STRING]", "makefile, tree-dumb"]
+    ["--dups-check", "analyze any file exactly once"]
   ]
   p = new optparse.OptionParser opt
   p.banner = "Usage: #{fub.pnGet()} [options] file.js ..."
 
   p.on 'verbose', -> fub.VERBOSE++
+
+  p.on 'dups-check', -> conf.dupsCheck = true
 
   p.on 'help', ->
     console.log p.toString()
@@ -64,9 +69,28 @@ parse_opts = (src) ->
 
   [(p.parse src), p]
 
+dupsCheck = (file, resolvedNodes) ->
+  return false unless conf.dupsCheck
+
+  r = false
+  try
+    process.chdir path.dirname file
+    absolute = tree.FNode.ResolveName file
+    if resolvedNodes[absolute]
+      fub.puts 1, 'fnodes_each', "%s: already processed", absolute
+      r = true
+  catch e
+    fub.warnx "fnodes_each: #{e}" if fub.VERBOSE >= 2
+  finally
+    process.chdir conf.startDir
+
+  r
+
 fnodes_each = (args, beforeCallback, afterCallback) ->
   resolvedNodes = {}
   for file,index in args
+    continue if dupsCheck file, resolvedNodes
+
     beforeCallback index
 
     ft = new tree.FTree resolvedNodes
@@ -90,6 +114,7 @@ fnodes_each = (args, beforeCallback, afterCallback) ->
 
       conf.streams = true
 
+    ft.index = index
     afterCallback ft
 
 draw_tree = (args) ->
