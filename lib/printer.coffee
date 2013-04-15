@@ -7,9 +7,9 @@ class PrinterError extends Error
 # Abstract
 class Printer
 
-  constructor: (ftree, @output, @opt) ->
+  constructor: (@ftree, @output, @opt) ->
     throw new PrinterError 'invalid tree' unless ftree?.root
-    @tree = ftree.root
+    @tree = @ftree.root
 
     throw new PrinterError 'invalid readable stream' unless @output?.writable
     @opt = {} unless @opt
@@ -68,5 +68,44 @@ class MakefilePrinter extends Printer
     @print idx for idx in deps
 
 
+class DotPrinter extends Printer
+
+  constructor: (ftree, output, opt) ->
+    super ftree, output, opt
+    @opt.completedJobs = {} unless @opt.completedJobs?
+
+    throw new Error 'invalid graphviz obj' unless @opt.g
+
+  generate: (fnode, cluster) ->
+    fnode = @tree unless fnode
+    return unless fnode
+
+    target_name = @conciseName fnode.name
+    # don't add already added
+    return if @opt.completedJobs[target_name]
+
+    if cluster
+      nn = @opt.g.addNode target_name
+    else
+      cluster = @opt.g.addCluster("cluster_#{@ftree.index}") unless cluster
+      nn = @opt.g.addNode target_name, {
+        style: 'filled'
+        fontcolor: 'yellow'
+        fillcolor : 'mediumslateblue'
+      }
+
+    deps = []
+    for key,val of fnode.deps
+      key = @conciseName key
+      cluster.addEdge nn, key
+      deps.push val
+
+    @opt.completedJobs[target_name] = true
+
+    # RECURSION
+    @generate idx, cluster for idx in deps
+
+
 exports.DumbTreePrinter = DumbTreePrinter
 exports.MakefilePrinter = MakefilePrinter
+exports.DotPrinter = DotPrinter

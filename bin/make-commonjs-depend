@@ -5,6 +5,7 @@ fs = require 'fs'
 path = require 'path'
 Stream = require 'stream'
 optparse = require 'optparse'
+graphviz = require 'graphviz'
 
 class Meta
   @_Pkg: null
@@ -41,7 +42,7 @@ parse_opts = (src) ->
     ["-v", "--verbose", "increase a verbosity level (debug only)"]
     ["-o", "--output [FILE]", "write result to a FILE instead of stdout"]
     ["-p", "--prefix [STRING]", "the prefix is prepended to the name of the target"]
-    ["-m", "--mode [STRING]", "makefile, tree-dumb"]
+    ["-m", "--mode [STRING]", "makefile, tree-dumb, dot"]
     ["--dups-check", "analyze any file exactly once"]
   ]
   p = new optparse.OptionParser opt
@@ -136,6 +137,23 @@ draw_makefile = (args) ->
       completedJobs: completedJobs
     }).print()
 
+draw_dot = (args) ->
+  completedJobs = {}
+  g = graphviz.digraph 'G'
+#  g.setNodeAttribut 'fontsize', '11'
+#  g.setNodeAttribut 'fontname', 'Trebuchet MS'
+
+  fnodes_each args
+  , (index) ->
+    ;
+  , (ftree) ->
+    new printer.DotPrinter(ftree, conf.output, {
+      completedJobs: completedJobs
+      g: g
+    }).generate()
+
+  conf.output.write g.to_dot()
+
 
 # main
 
@@ -150,6 +168,8 @@ switch conf.mode
     draw_tree args
   when 'makefile'
     draw_makefile args
+  when 'dot'
+    draw_dot args
   else
     fub.errx 1, "mode #{conf.mode} isn't implemented"
 

@@ -25,7 +25,7 @@ for JavaScript.
       -v, --verbose           increase a verbosity level (debug only)
       -o, --output [FILE]     write result to a FILE instead of stdout
       -p, --prefix [STRING]   the prefix is prepended to the name of the target
-      -m, --mode [STRING]     makefile, tree-dumb
+      -m, --mode [STRING]     makefile, tree-dumb, dot
           --dups-check        analyze any file exactly once
 
 ### Quick visual test
@@ -62,6 +62,12 @@ for JavaScript.
 Notice 0 duplication. Despite that input was 3 .js files, dependencies
 were printed only once.
 
+## Just for fun result of dot rendering
+
+    $ make-commonjs-depend *js -m dot | dot -Tpng | xv -
+
+![options page](https://raw.github.com/gromnitsky/make-commonjs-depend/master/doc/simple.png)
+
 ## Requirements
 
 * Node.js >= 0.10.2
@@ -74,7 +80,6 @@ were printed only once.
 ## TODO
 
 * npm module
-* DOT output.
 
 ## License
 
