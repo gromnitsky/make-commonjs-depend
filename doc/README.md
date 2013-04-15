@@ -6,9 +6,7 @@ for JavaScript.
 
 ## Features
 
-* Look for CommonJS `require` to build the dependency tree (with
-  substack's `detective` lib (which uses Esprima parser, not some crazy
-  regexps)).
+* Looks for CommonJS `require` to build the dependency tree.
 * Detects circular links.
 * Parses each dependency exactly once, maintaining an internal symbol
   table for each.
@@ -62,7 +60,7 @@ for JavaScript.
 Notice 0 duplication. Despite that input was 3 .js files, dependencies
 were printed only once.
 
-## Just for fun result of dot rendering
+### Just for fun result of dot rendering
 
     $ make-commonjs-depend *js -m dot | dot -Tpng | xv -
 
