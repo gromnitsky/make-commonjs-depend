@@ -9,7 +9,6 @@ suite 'Tree', ->
     @t = new tree.FTree @read_nodes
 
   test 'empty tree', ->
-    assert.equal process.cwd(), @t.startDir
     assert.equal null, @t.root
 
   test 'createRoot fail', ->
@@ -19,9 +18,9 @@ suite 'Tree', ->
 
     assert.throws =>
       @t.createRoot 'DOES NOT/EXIST/foo.js'
-    , tree.FTreeError
+    , tree.FNodeError
 
-  test 'createRoot fail', ->
+  test 'createRoot', ->
     @t.createRoot 'data/simple/d.js'
     assert @t.root.name.match '/test/data/simple/d/d.js'
 
@@ -45,11 +44,11 @@ suite 'Tree', ->
   test 'breed fail', ->
     assert.throws =>
       @t.breed()
-    , tree.FNodeDepError
+    , tree.FTreeError
 
   test 'breed simple/a.js & simple/b.js', ->
     # read 1st source file
-    @t.breed 'data/simple/a.js'
+    @t.breed null, 'data/simple/a.js'
     assert.equal 2, @t.root.depSize()
     assert.equal 3, Object.keys(@read_nodes).length
 
@@ -74,7 +73,7 @@ suite 'Tree', ->
     # data
     process.chdir __dirname
     foo = new tree.FTree @read_nodes
-    foo.breed 'data/simple/b.js'
+    foo.breed null, 'data/simple/b.js'
     assert.equal 1, foo.root.depSize()
 
     key = (Object.keys foo.root.deps)[0]
@@ -82,9 +81,9 @@ suite 'Tree', ->
 
   test 'raise FNodeDepError exception for circular deps', ->
     assert.throws =>
-      @t.breed 'data/broken/circular/a.js'
+      @t.breed null, 'data/broken/circular/a.js'
     , tree.FNodeDepError
 
   test 'ignore directory as a dependency', ->
-    @t.breed 'data/broken/dir/a.js'
+    @t.breed null, 'data/broken/dir/a.js'
     assert.equal 0, @t.root.depSize()

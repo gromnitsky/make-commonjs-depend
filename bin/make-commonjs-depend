@@ -75,15 +75,12 @@ dupsCheck = (file, resolvedNodes) ->
 
   r = false
   try
-    process.chdir path.dirname file
-    absolute = tree.FNode.ResolveName file
+    absolute = tree.FNode.ResolveName2 null, file
     if resolvedNodes[absolute]
       fub.puts 1, 'fnodes_each', "%s: already processed", absolute
       r = true
   catch e
     fub.warnx "fnodes_each: #{e}" if fub.VERBOSE >= 2
-  finally
-    process.chdir conf.startDir
 
   r
 
@@ -96,7 +93,7 @@ fnodes_each = (args, beforeCallback, afterCallback) ->
 
     ft = new tree.FTree resolvedNodes
     try
-      ft.breed file
+      ft.breed null, file
     catch e
       rm_output_onerror()
       fub.errx 1, e.message if e instanceof tree.FNodeDepError

@@ -18,9 +18,9 @@ class FNodeDepError extends Error
 
 class FNode
 
-  constructor: (@name, mustBeReal = false) ->
+  constructor: (relativeToPath, @name, mustBeReal = false) ->
     throw new FNodeError "unwanted name: '#{@name}'" unless FNode.IsValidName(@name)
-    @name = FNode.ResolveName @name if mustBeReal
+    @name = FNode.ResolveName2 relativeToPath, @name if mustBeReal
     @deps = {} # { file_name : FNode }
     @parent = null
 
@@ -28,32 +28,32 @@ class FNode
   @IsValidName: (name) ->
     throw new FNodeError "unsupported platform: #{process.platform}" if process.platform == 'win32'
 
+    # TODO: check if it's valid in Windows
     return true if name.match /^(\/|\.\.\/|\.\/).+/
     false
 
   # Raise an exception on error.
   # Does follow symlinks.
   #
-  # May change CWD.
   # Return an absolute file name.
-  @ResolveName: (name) ->
+  @ResolveName2: (relativeToPath, name) ->
     throw new FNodeError 'empty name' unless name
 
+    fub.puts 2, '\nRN0', 'rel=%s, name=%s', relativeToPath, name
     result = null
     err = null
-    name = path.basename name
+    relativeToPath = '' unless relativeToPath
+    name = path.resolve relativeToPath, name
 
     for idx in [name, "#{name}.js", "#{name}.json", "#{name}.node"]
-      fub.puts 2, '\nRN1', 'idx=%s cwd=%s', idx, process.cwd()
+      fub.puts 2, 'RN1', idx
       try
         result = fs.realpathSync idx
         if fs.statSync(result).isDirectory()
           result = null
           continue
 
-        # symlink may resolve to a another dir
-        process.chdir path.dirname(result)
-        fub.puts 2, '\nRN1', 'cwd=%s r=%s', process.cwd(), result
+        fub.puts 2, 'RN', result
         break
       catch e
         err = new FNodeError(e.message)
@@ -76,8 +76,8 @@ class FNode
   # Overwrite an existing one with equal fname.
   #
   # Return added FNode.
-  depAdd: (fname, mustBeReal = false) ->
-    nd = new FNode fname, mustBeReal
+  depAdd: (relativeToPath, fname, mustBeReal = false) ->
+    nd = new FNode relativeToPath, fname, mustBeReal
 
     fname = nd.name
     if @isOffspringOf fname
@@ -110,19 +110,13 @@ class FTree
   # { file_name: FNode }
   constructor: (@resolved = {}) ->
     @root = null
-    @startDir = process.cwd()
 
-  # Side effects: changes current dir.
+  # Raise an exception on error.
   # Return new FNode.
   createRoot: (fname) ->
     dir = path.dirname(fname)
-    try
-      process.chdir dir
-    catch e
-      throw new FTreeError "chdir failed: #{e}: #{dir}"
-
     fname = path.basename fname
-    @root = new FNode "./#{fname}", true
+    @root = new FNode dir, "./#{fname}", true
 
   # Raise an exception on error.
   # Return an array of (incomplete) file names.
@@ -136,7 +130,10 @@ class FTree
 
   # Raise an exception on error.
   # Return nothing.
-  breed: (fname, parentNode) ->
+  breed: (relativeToPath, fname, parentNode) ->
+    throw new FTreeError 'empty fname' unless fname
+    relativeToPath = '' unless relativeToPath
+    fname = path.resolve relativeToPath, fname
     deps = null
 
     if parentNode
@@ -147,29 +144,26 @@ class FTree
     else
       deps = FTree.GetDeps fname
       parentNode = @createRoot fname
+      relativeToPath = path.dirname @root.name
 
     deps = deps ? FTree.GetDeps fname
     fub.puts 1, 'breed', '%s: deps:', fname, deps
-    save_dir = process.cwd()
+
     for idx in deps
-      process.chdir path.dirname(idx)
+      rel_dir = relativeToPath
       try
-        nd = parentNode.depAdd idx, true
+        nd = parentNode.depAdd rel_dir, idx, true
         idx = nd.name
+        rel_dir = path.dirname idx
       catch e
         if e instanceof FNodeError
           fub.puts 1, 'breed', '%s: SKIPPING: %s', idx, e.message
-          process.chdir save_dir
           continue
         throw e
 
       # RECURSION
-      @breed idx, nd
+      @breed rel_dir, idx, nd
       @resolved[idx] = nd unless @resolved[idx]
-      process.chdir save_dir
-
-    process.chdir @startDir
-
 
 exports.FNodeError = FNodeError
 exports.FNodeDepError = FNodeDepError
