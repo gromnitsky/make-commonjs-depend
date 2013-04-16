@@ -5,16 +5,10 @@ detective = require 'detective'
 fub = require './funcbag'
 
 class FNodeError extends Error
-  constructor: (msg) ->
-    @name = @constructor.name
-    @message = "FNode: #{msg}"
-    Error.captureStackTrace this, @name
+  constructor: (msg) -> fub.makeError FNodeError, this, 'FNode', msg
 
 class FNodeDepError extends Error
-  constructor: (msg) ->
-    @name = @constructor.name
-    @message = "FNodeDep: #{msg}"
-    Error.captureStackTrace this, @name
+  constructor: (msg) -> fub.makeError FNodeDepError, this, 'FNodeDep', msg
 
 class FNode
 
@@ -93,10 +87,7 @@ class FNode
 
 
 class FTreeError extends Error
-  constructor: (msg) ->
-    @name = @constructor.name
-    @message = "FTree: #{msg}"
-    Error.captureStackTrace this, @name
+  constructor: (msg) -> fub.makeError FTreeError, this, 'FNodeDep', msg
 
 # Example:
 #

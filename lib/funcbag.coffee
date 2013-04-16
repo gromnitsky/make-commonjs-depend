@@ -17,3 +17,13 @@ exports.errx = (exit_code, msg) ->
 
 exports.warnx = (msg) ->
   console.error "#{exports.pnGet()} warning: #{msg}" unless exports.QUIET
+
+# Example:
+#
+# class MyError extends Error
+#   constructor: (msg) -> makeError MyError, this, 'my error', msg
+#
+exports.makeError = (klass, errObj, prefix, msg) ->
+  errObj.name = klass.name
+  errObj.message = "#{prefix}: #{msg}"
+  Error.captureStackTrace errObj, klass
