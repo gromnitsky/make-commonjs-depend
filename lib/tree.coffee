@@ -12,9 +12,14 @@ class FNodeDepError extends Error
 
 class FNode
 
-  constructor: (relativeToPath, @name, mustBeReal = false) ->
+  constructor: (relativeToPath, @name, @opt) ->
     throw new FNodeError "unwanted name: '#{@name}'" unless FNode.IsValidName(@name)
-    @name = FNode.ResolveName2 relativeToPath, @name if mustBeReal
+    unless @opt
+      @opt = {}
+      @opt.mustBeReal = false
+      @opt.circularLinksCheck = true
+
+    @name = FNode.ResolveName2 relativeToPath, @name if @opt.mustBeReal
     @deps = {} # { file_name : FNode }
     @parent = null
 
@@ -70,12 +75,13 @@ class FNode
   # Overwrite an existing one with equal fname.
   #
   # Return added FNode.
-  depAdd: (relativeToPath, fname, mustBeReal = false) ->
-    nd = new FNode relativeToPath, fname, mustBeReal
+  depAdd: (relativeToPath, fname) ->
+    nd = new FNode relativeToPath, fname, @opt
 
     fname = nd.name
+    exception_type = if @opt.circularLinksCheck then FNodeDepError else FNodeError
     if @isOffspringOf fname
-      throw new FNodeDepError "circular link between '#{fname}' & ('#{@name}' or its parents)"
+      throw new exception_type "circular link between '#{fname}' & ('#{@name}' or its parents)"
 
     nd.parent = this
     @deps[fname] = nd
@@ -93,21 +99,24 @@ class FTreeError extends Error
 #
 # ft = new FTree()
 # ft.breed "a.js"
-# ft.print()
 class FTree
 
   # @resolved is pool of shared, already processed FNodes:
   #
   # { file_name: FNode }
-  constructor: (@resolved = {}) ->
+  constructor: (@fnodeOpt, @resolved = {}) ->
     @root = null
+    unless @fnodeOpt
+      @fnodeOpt = {}
+      @fnodeOpt.mustBeReal = true
+      @fnodeOpt.circularLinksCheck = true
 
   # Raise an exception on error.
   # Return new FNode.
   createRoot: (fname) ->
     dir = path.dirname(fname)
     fname = path.basename fname
-    @root = new FNode dir, "./#{fname}", true
+    @root = new FNode dir, "./#{fname}", @fnodeOpt
 
   # Raise an exception on error.
   # Return an array of (incomplete) file names.
@@ -143,7 +152,7 @@ class FTree
     for idx in deps
       rel_dir = relativeToPath
       try
-        nd = parentNode.depAdd rel_dir, idx, true
+        nd = parentNode.depAdd rel_dir, idx
         idx = nd.name
         rel_dir = path.dirname idx
       catch e

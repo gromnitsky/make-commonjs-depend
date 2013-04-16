@@ -6,7 +6,7 @@ suite 'Tree', ->
   setup ->
     process.chdir __dirname
     @read_nodes = {}
-    @t = new tree.FTree @read_nodes
+    @t = new tree.FTree null, @read_nodes
 
   test 'empty tree', ->
     assert.equal null, @t.root
@@ -59,12 +59,12 @@ suite 'Tree', ->
 
     b = a.deps[adeps[0]]
     bdeps = Object.keys b.deps
-    assert 1, b.depSize()
+    assert.equal 1, b.depSize()
     assert b.deps[bdeps[0]].name.match '/data/simple/c.js'
 
     c = b.deps[bdeps[0]]
     cdeps = Object.keys c.deps
-    assert 1, c.depSize()
+    assert.equal 1, c.depSize()
     assert c.deps[cdeps[0]].name.match '/data/simple/d/d.js'
 
     assert.equal c, a.deps[adeps[1]]
@@ -72,7 +72,7 @@ suite 'Tree', ->
     # read 2nd source file but with existing non-empty resolved nodes
     # data
     process.chdir __dirname
-    foo = new tree.FTree @read_nodes
+    foo = new tree.FTree null, @read_nodes
     foo.breed null, 'data/simple/b.js'
     assert.equal 1, foo.root.depSize()
 
@@ -83,6 +83,25 @@ suite 'Tree', ->
     assert.throws =>
       @t.breed null, 'data/broken/circular/a.js'
     , tree.FNodeDepError
+
+  test "don't raise FNodeDepError exception for circular deps", ->
+    @t.fnodeOpt.circularLinksCheck = false
+    @t.breed null, 'data/broken/circular/a.js'
+    assert.equal 1, @t.root.depSize()
+
+    a = @t.root
+    adeps = Object.keys a.deps
+    assert a.deps[adeps[0]].name.match '/data/broken/circular/b.js'
+
+    b = a.deps[adeps[0]]
+    bdeps = Object.keys b.deps
+    assert.equal 1, b.depSize()
+    assert b.deps[bdeps[0]].name.match '/data/broken/circular/c.js'
+
+    c = b.deps[bdeps[0]]
+    assert c.parent == b
+    cdeps = Object.keys c.deps
+    assert.equal 0, c.depSize()
 
   test 'ignore directory as a dependency', ->
     @t.breed null, 'data/broken/dir/a.js'

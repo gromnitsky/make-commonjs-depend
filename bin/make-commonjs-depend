@@ -29,6 +29,7 @@ conf = {
   mode: 'makefile'
   prefix: ''
   dupsCheck: false
+  circularLinksCheck: true
 }
 
 rm_output_onerror = ->
@@ -44,6 +45,7 @@ parse_opts = (src) ->
     ["-p", "--prefix [STRING]", "the prefix is prepended to the name of the target"]
     ["-m", "--mode [STRING]", "makefile, tree-dumb, dot"]
     ["--dups-check", "analyze any file exactly once"]
+    ["--no-circular-error", "skip circular nodes (not recommended)"]
   ]
   p = new optparse.OptionParser opt
   p.banner = "Usage: #{fub.pnGet()} [options] file.js ..."
@@ -51,6 +53,8 @@ parse_opts = (src) ->
   p.on 'verbose', -> fub.VERBOSE++
 
   p.on 'dups-check', -> conf.dupsCheck = true
+
+  p.on 'no-circular-error', -> conf.circularLinksCheck = false
 
   p.on 'help', ->
     console.log p.toString()
@@ -91,7 +95,10 @@ fnodes_each = (args, beforeCallback, afterCallback) ->
 
     beforeCallback index
 
-    ft = new tree.FTree resolvedNodes
+    ft = new tree.FTree {
+      mustBeReal: true
+      circularLinksCheck: conf.circularLinksCheck
+    }, resolvedNodes
     try
       ft.breed null, file
     catch e
