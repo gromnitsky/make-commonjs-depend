@@ -87,12 +87,9 @@ class DotPrinter extends Printer
     if cluster
       nn = @opt.g.addNode target_name
     else
-      cluster = @opt.g.addCluster("cluster_#{@ftree.index}") unless cluster
-      nn = @opt.g.addNode target_name, {
-        style: 'filled'
-        fontcolor: 'yellow'
-        fillcolor : 'mediumslateblue'
-      }
+      cluster = @opt.g.addCluster("cluster_#{@ftree.index}")
+      cluster.set 'color', 'slategray'
+      nn = cluster.addNode target_name
 
     deps = []
     for key,val of fnode.deps

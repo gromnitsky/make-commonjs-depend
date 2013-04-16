@@ -137,7 +137,7 @@ draw_makefile = (args) ->
 draw_dot = (args) ->
   completedJobs = {}
   g = graphviz.digraph 'G'
-#  g.setNodeAttribut 'fontsize', '11'
+  g.set 'rankdir', 'LR'
 #  g.setNodeAttribut 'fontname', 'Trebuchet MS'
 
   fnodes_each args
