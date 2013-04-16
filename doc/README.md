@@ -18,13 +18,14 @@ for JavaScript.
     Usage: make-commonjs-depend [options] file.js ...
 
     Available options:
-      -h, --help              output usage information & exit
-      -V, --version           output the version number & exit
-      -v, --verbose           increase a verbosity level (debug only)
-      -o, --output [FILE]     write result to a FILE instead of stdout
-      -p, --prefix [STRING]   the prefix is prepended to the name of the target
-      -m, --mode [STRING]     makefile, tree-dumb, dot
-          --dups-check        analyze any file exactly once
+      -h, --help                output usage information & exit
+      -V, --version             output the version number & exit
+      -v, --verbose             increase a verbosity level (debug only)
+      -o, --output [FILE]       write result to a FILE instead of stdout
+      -p, --prefix [STRING]     the prefix is prepended to the name of the target
+      -m, --mode [STRING]       makefile, tree-dumb, dot
+          --dups-check          analyze any file exactly once
+          --no-circular-error   skip circular nodes (not recommended)
 
 ### Quick visual test
 
@@ -65,6 +66,13 @@ were printed only once.
     $ make-commonjs-depend *js -m dot | dot -Tpng | xv -
 
 ![options page](https://raw.github.com/gromnitsky/make-commonjs-depend/master/doc/simple.png)
+
+    $ pwd
+    /opt/s/node-v0.10.4-linux-x86/lib/node_modules/npm/lib
+    $ find . -type f -name \*js | xargs make-commonjs-depend \
+        -m dot --no-circular-error | dot -Tpng | xv -
+
+![options page](https://raw.github.com/gromnitsky/make-commonjs-depend/master/doc/npm.png)
 
 ## Requirements
 
