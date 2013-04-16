@@ -1,0 +1,15 @@
+data/simple/a.js, deps: 2
+  data/simple/b.js, deps: 1
+    data/simple/c.js, deps: 1
+      data/simple/d/d.js, deps: 0
+  data/simple/c.js, deps: 1
+    data/simple/d/d.js, deps: 0
+
+data/simple/b.js, deps: 1
+  data/simple/c.js, deps: 1
+    data/simple/d/d.js, deps: 0
+
+data/simple/c.js, deps: 1
+  data/simple/d/d.js, deps: 0
+
+data/simple/d/d.js, deps: 0

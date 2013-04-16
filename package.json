@@ -18,6 +18,7 @@
 		"graphviz": "0.0.8"
 	},
 	"devDependencies": {
-		"mocha": "~1.8.2"
+		"mocha": "~1.8.2",
+		"execSync": "0.0.4"
 	}
 }

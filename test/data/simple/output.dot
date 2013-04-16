@@ -1,0 +1,18 @@
+digraph G {
+  graph [ rankdir = LR ];
+subgraph cluster_0 {
+  graph [ color = "slategray" ];
+  "data/simple/a.js";
+  "data/simple/b.js";
+  "data/simple/c.js";
+  "data/simple/d/d.js";
+  "data/simple/a.js" -> "data/simple/b.js";
+  "data/simple/a.js" -> "data/simple/c.js";
+  "data/simple/b.js" -> "data/simple/c.js";
+  "data/simple/c.js" -> "data/simple/d/d.js";
+}
+
+  "data/simple/b.js";
+  "data/simple/c.js";
+  "data/simple/d/d.js";
+}
