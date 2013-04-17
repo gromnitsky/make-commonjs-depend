@@ -12,6 +12,14 @@ for JavaScript.
   table for each.
 * Ignores 'system' libs & libs from 'node_modules' directory.
 
+## Installation
+
+	$ npm install -g make-commonjs-depend
+
+Don't forget to have CoffeeScript installed globally too:
+
+    $ npm install -g coffee-script
+
 ## Examples
 
     $ make-commonjs-depend -h
@@ -74,18 +82,9 @@ were printed only once.
 
 ![options page](https://raw.github.com/gromnitsky/make-commonjs-depend/master/doc/npm.png)
 
-## Requirements
-
-* Node.js >= 0.10.2
-* CoffeeScript >= 1.6.2
-
 ## BUGS
 
 * Doesn't work under Windows.
-
-## TODO
-
-* npm module
 
 ## License
 

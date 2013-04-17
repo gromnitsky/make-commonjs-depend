@@ -1,24 +1,41 @@
 {
 	"name": "make-commonjs-depend",
 	"version": "0.0.1",
-	"preferGlobal": true,
+	"description": "Create dependencies for Makefiles. It's like makedepend but for JavaScript.",
+	"keywords" : [
+		"makedepend",
+		"commonjs",
+		"makefile",
+		"dot",
+		"graph",
+		"graphviz",
+		"require",
+		"dependency",
+		"build",
+		"coffeescript"
+	],
 	"author": "Alexander Gromnitsky <alexander.gromnitsky@gmail.com>",
 	"license": {
 		"type": "MIT",
 		"url": "http://www.opensource.org/licenses/mit-license.php"
 	},
+	"url": "https://github.com/gromnitsky/make-commonjs-depend",
 	"repository": {
 		"type": "git",
-		"url": "http://github.com/gromnitsky/make-commonjs-depend"
+		"url": "git://github.com/gromnitsky/make-commonjs-depend.git"
 	},
+	"preferGlobal": true,
+	"bin": "./bin/make-commonjs-depend",
 	"dependencies": {
 		"detective": "~2.1.0",
 		"optparse": "~1.0.4",
-		"coffee-script": "~1.6.2",
 		"graphviz": "0.0.8"
 	},
 	"devDependencies": {
+		"coffee-script": "~1.6.2",
 		"mocha": "~1.8.2",
 		"execSync": "0.0.4"
-	}
+	},
+	"engines": { "node": ">= 0.10.0" },
+	"os" : [ "!win32" ]
 }
