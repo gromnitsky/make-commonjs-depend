@@ -1,6 +1,6 @@
 {
 	"name": "make-commonjs-depend",
-	"version": "0.0.1",
+	"version": "0.0.2-alpha",
 	"description": "Create dependencies for Makefiles. It's like makedepend but for JavaScript.",
 	"keywords" : [
 		"makedepend",

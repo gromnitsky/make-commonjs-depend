@@ -7,20 +7,12 @@ Stream = require 'stream'
 optparse = require 'optparse'
 graphviz = require 'graphviz'
 
-class Meta
-  @_Pkg: null
-
-  @JSON: ->
-    if @_Pkg?
-      @_Pkg
-    else
-      @_Pkg = JSON.parse (fs.readFileSync "#{__dirname}/../package.json")
-
 tree = require '../lib/tree'
 fub = require '../lib/funcbag'
 printer = require '../lib/printer'
 
 conf = {
+  progver: JSON.parse(fs.readFileSync("#{__dirname}/../package.json")).version
   streams: false
   startDir: process.cwd()
   rm_output_onerror: true
@@ -61,7 +53,7 @@ parse_opts = (src) ->
     process.exit 0
 
   p.on 'version', ->
-    console.log Meta.JSON().version
+    console.log conf.progver
     process.exit 0
 
   p.on 'output', (unused, val) -> conf.output = val

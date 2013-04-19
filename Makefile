@@ -1,9 +1,5 @@
 JSON := json
 MOCHA := node_modules/.bin/mocha
-
-METADATA := package.json
-PKG := $(shell $(JSON) -a -d- name version < $(METADATA))
-
 OPTS :=
 
 .PHONY: clobber clean

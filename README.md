@@ -14,11 +14,11 @@ for JavaScript.
 
 ## Installation
 
-	$ npm install -g make-commonjs-depend
+    # npm install -g make-commonjs-depend
 
 Don't forget to have CoffeeScript installed globally too:
 
-    $ npm install -g coffee-script
+    # npm install -g coffee-script
 
 ## Examples
 
