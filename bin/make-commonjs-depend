@@ -20,6 +20,7 @@ conf = {
   output: process.stdout
   mode: 'makefile'
   prefix: ''
+  mk_recipe: ''
   dupsCheck: false
   circularLinksCheck: true
 }
@@ -36,6 +37,7 @@ parse_opts = (src) ->
     ["-o", "--output [FILE]", "write result to a FILE instead of stdout"]
     ["-p", "--prefix [STRING]", "the prefix is prepended to the name of the target"]
     ["-m", "--mode [STRING]", "makefile, tree-dumb, dot"]
+    ["--mk-recipe [STRING]", "add a recipe to targets that have non-zero deps"]
     ["--dups-check", "analyze any file exactly once"]
     ["--no-circular-error", "skip circular nodes (not recommended)"]
   ]
@@ -59,6 +61,8 @@ parse_opts = (src) ->
   p.on 'output', (unused, val) -> conf.output = val
 
   p.on 'prefix', (unused, val) -> conf.prefix = val
+
+  p.on 'mk-recipe', (unused, val) -> conf.mk_recipe = val
 
   p.on 'mode', (unused, val) -> conf.mode = val
 
@@ -131,6 +135,7 @@ draw_makefile = (args) ->
     new printer.MakefilePrinter(ftree, conf.output, {
       prefix: conf.prefix
       completedJobs: completedJobs
+      recipe: conf.mk_recipe
     }).print()
 
 draw_dot = (args) ->

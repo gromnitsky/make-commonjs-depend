@@ -16,7 +16,7 @@ for JavaScript.
 
     # npm install -g make-commonjs-depend
 
-Don't forget to have CoffeeScript installed globally too:
+Don't forget to have CoffeeScript installed **globally** too:
 
     # npm install -g coffee-script
 
@@ -26,14 +26,15 @@ Don't forget to have CoffeeScript installed globally too:
     Usage: make-commonjs-depend [options] file.js ...
 
     Available options:
-      -h, --help                output usage information & exit
-      -V, --version             output the version number & exit
-      -v, --verbose             increase a verbosity level (debug only)
-      -o, --output [FILE]       write result to a FILE instead of stdout
-      -p, --prefix [STRING]     the prefix is prepended to the name of the target
-      -m, --mode [STRING]       makefile, tree-dumb, dot
-          --dups-check          analyze any file exactly once
-          --no-circular-error   skip circular nodes (not recommended)
+      -h, --help                 output usage information & exit
+      -V, --version              output the version number & exit
+      -v, --verbose              increase a verbosity level (debug only)
+      -o, --output [FILE]        write result to a FILE instead of stdout
+      -p, --prefix [STRING]      the prefix is prepended to the name of the target
+      -m, --mode [STRING]        makefile, tree-dumb, dot
+          --mk-recipe [STRING]   add a recipe to targets that have non-zero deps
+          --dups-check           analyze any file exactly once
+          --no-circular-error    skip circular nodes (not recommended)
 
 ### Quick visual test
 
@@ -85,6 +86,12 @@ were printed only once.
 ## BUGS
 
 * Doesn't work under Windows.
+
+## NEWS
+
+### 0.1.0
+
+* `--mk-recipe` CLO.
 
 ## License
 

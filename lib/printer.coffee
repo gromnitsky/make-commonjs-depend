@@ -44,6 +44,7 @@ class MakefilePrinter extends Printer
     super ftree, output, opt
     @opt.prefix = '' unless @opt.prefix?
     @opt.completedJobs = {} unless @opt.completedJobs?
+    @opt.recipe = '' unless @opt.recipe?
 
   print: (fnode) ->
     fnode = @tree unless fnode
@@ -60,6 +61,8 @@ class MakefilePrinter extends Printer
       key = @conciseName key
       target_spec += " \\\n  #{key}"
       deps.push val
+
+    target_spec += "\n\t#{@opt.recipe}" if @opt.recipe && fnode.depSize() != 0
 
     @output.write "#{@opt.prefix}#{target_spec}\n"
     @opt.completedJobs[target_name] = true

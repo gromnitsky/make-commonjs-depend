@@ -1,0 +1,11 @@
+QQQ/data/simple/a.js: \
+  data/simple/b.js \
+  data/simple/c.js
+	WWW
+QQQ/data/simple/b.js: \
+  data/simple/c.js
+	WWW
+QQQ/data/simple/c.js: \
+  data/simple/d/d.js
+	WWW
+QQQ/data/simple/d/d.js:
