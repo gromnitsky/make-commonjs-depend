@@ -11,7 +11,7 @@ node_modules: package.json
 	touch $@
 
 test: compile
-	$(MOCHA) --compilers coffee:coffee-script -u tdd test $(OPTS)
+	$(MOCHA) --compilers coffee:coffee-script/register -u tdd test $(OPTS)
 
 compile: node_modules
 

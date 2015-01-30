@@ -1,6 +1,6 @@
 {
 	"name": "make-commonjs-depend",
-	"version": "0.1.0",
+	"version": "0.1.1",
 	"description": "Create dependencies for Makefiles. It's like makedepend but for JavaScript.",
 	"keywords" : [
 		"makedepend",
@@ -32,9 +32,9 @@
 		"graphviz": "0.0.8"
 	},
 	"devDependencies": {
-		"coffee-script": "~1.6.2",
-		"mocha": "~1.8.2",
-		"execSync": "0.0.4"
+		"coffee-script": "~1.9.0",
+		"mocha": "~2.1.0",
+		"execSync": "1.0.2"
 	},
 	"engines": { "node": ">= 0.10.0" },
 	"os" : [ "!win32" ]

@@ -8,7 +8,7 @@ class PrinterError extends Error
 class Printer
 
   constructor: (@ftree, @output, @opt) ->
-    throw new PrinterError 'invalid tree' unless ftree?.root
+    throw new PrinterError 'invalid tree' unless @ftree?.root
     @tree = @ftree.root
 
     throw new PrinterError 'invalid readable stream' unless @output?.writable
